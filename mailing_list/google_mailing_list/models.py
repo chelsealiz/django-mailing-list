@@ -26,14 +26,16 @@ class CredentialsModel(models.Model):
     credential = CredentialsField()
 
 class SendData(models.Model):
+    name = models.CharField(max_length=200, blank=False)
+    email = models.CharField(max_length=200, blank=False)
 
-    def __init__(self, name, email):
-        self.name = name
-        self.email  = email
+    def create(cls, name, email):
+        data = cls(name=name, email=email)
+        return data
 
     def send_data(request):
         name = SendData.name
-        email = SendData.email,"@jeffspies.com"
+        email = SendData.email
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
         
@@ -53,6 +55,7 @@ class SendData(models.Model):
             "name": name
         }
         result = SendData.POST(final, params=post_data)
+        return result
 
 
 class MailingList(models.Model):
@@ -63,8 +66,8 @@ class MailingList(models.Model):
         return self.name
 
     def save(self):
-        sending = SendData(self.name, self.email)
-        sending.send_data()
+        sending = SendData.create(self.name, self.email)
+        return sending.send_data()
 
 
 class Staff(models.Model):
