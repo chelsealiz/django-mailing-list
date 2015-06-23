@@ -90,7 +90,7 @@ class MailingList(models.Model):
         sending = SendData()
         sending.name=self.name
         sending.email = self.email
-        sending.send_data(self.user)
+        sending.send_data(sending)
         return super(MailingList, self).save(*args, **kwargs)
 
 
