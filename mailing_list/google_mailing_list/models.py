@@ -29,32 +29,53 @@ class SendData(models.Model):
     name = models.CharField(max_length=200, blank=False)
     email = models.CharField(max_length=200, blank=False)
 
-    def create(cls, name, email):
-        data = cls(name=name, email=email)
-        return data
+    def send_data(self, request):
+        name = self.name
+        email = self.email
 
-    def send_data(request):
-        name = SendData.name
-        email = SendData.email
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
         
+
         flow = OAuth2WebServerFlow(client_id=client_id,
                            client_secret=client_secret,
                            scope=scope,
-                           redirect_uri='http://localhost:8000/admin')
+                           redirect_uri='localhost')
         storage = Storage(CredentialsModel, 'id', request.user, 'credential')
         credential = storage.get()
-        if credential is None or credential.invalid == True:
-            flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
-                                                   request.user)
-            authorize_url = flow.step1_get_authorize_url()
-            return HttpResponseRedirect(authorize_url)
         post_data = {
             "email": email,
             "name": name
         }
-        result = SendData.POST(final, params=post_data)
+        #
+        # if credential is None or credential.invalid == True:
+        #     flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
+        #                                            request.user)
+        #     authorize_url = flow.step1_get_authorize_url()
+        #     http = HttpResponseRedirect(authorize_url)
+        #     credential = flow.step2_exchange(http)
+        #     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+        #     storage.put(credential)
+        #     http2 = httplib2.Http()
+        #     http2 = credential.authorize(http2.request(final, "POST", body=post_data))
+        #     return http2
+        # else:
+        #     credential = flow.step2_exchange(credential)
+        #     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+        #     storage.put(credential)
+        #     http2 = httplib2.Http()
+        #     http2 = credential.authorize(http2.request(final, "POST", body=post_data))
+        #     return http2
+        if credential is None or credential.invalid == True:
+            flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
+                                                           request.user)
+            authorize_url = flow.step1_get_authorize_url()
+            authorize_url = HttpResponseRedirect(authorize_url)
+            credential = flow.step2_exchange(authorize_url)
+            storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+            storage.put(credential)
+        credential = flow.step2_exchange(credential)
+        result = credential.authorize(SendData.POST(final, params=post_data))
         return result
 
 
@@ -65,9 +86,13 @@ class MailingList(models.Model):
     def __unicode__(self):
         return self.name
 
-    def save(self):
-        sending = SendData.create(self.name, self.email)
-        return sending.send_data()
+    def save(self, *args, **kwargs):
+        sending = SendData()
+        sending.name=self.name
+        sending.email = self.email
+        sending.send_data(self.user)
+        return super(MailingList, self).save(*args, **kwargs)
+
 
 
 class Staff(models.Model):
