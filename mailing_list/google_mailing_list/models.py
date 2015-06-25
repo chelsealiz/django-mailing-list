@@ -20,6 +20,9 @@ from oauth2client.django_orm import Storage
 from django.conf import settings
 from django.contrib.auth.models import User
 
+class FlowModel(models.Model):
+  id = models.ForeignKey(User, primary_key=True)
+  flow = FlowField()
 
 class CredentialsModel(models.Model):
     id = models.ForeignKey(User, primary_key=True)
@@ -36,8 +39,7 @@ class SendData(models.Model):
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
         
-
-        flow = OAuth2WebServerFlow(client_id=client_id,
+        flow = FlowModel(client_id=client_id,
                            client_secret=client_secret,
                            scope=scope,
                            redirect_uri='localhost')
@@ -90,7 +92,7 @@ class MailingList(models.Model):
         sending = SendData()
         sending.name=self.name
         sending.email = self.email
-        sending.send_data(sending)
+        sending.send_data()
         return super(MailingList, self).save(*args, **kwargs)
 
 
