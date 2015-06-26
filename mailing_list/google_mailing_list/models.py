@@ -35,15 +35,15 @@ class SendData(models.Model):
     def send_data(self, request):
         name = self.name
         email = self.email
-
+        user = request.user
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
         
-        flow = FlowModel(client_id=client_id,
+        flow = OAuth2WebServerFlow(client_id=client_id,
                            client_secret=client_secret,
                            scope=scope,
                            redirect_uri='localhost')
-        storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+        storage = Storage(CredentialsModel, 'id', user, 'credential')
         credential = storage.get()
         post_data = {
             "email": email,
@@ -70,14 +70,14 @@ class SendData(models.Model):
         #     return http2
         if credential is None or credential.invalid == True:
             flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
-                                                           request.user)
+                                                           user)
             authorize_url = flow.step1_get_authorize_url()
             authorize_url = HttpResponseRedirect(authorize_url)
             credential = flow.step2_exchange(authorize_url)
-            storage = Storage(CredentialsModel, 'id', request.user, 'credential')
+            storage = Storage(CredentialsModel, 'id', user, 'credential')
             storage.put(credential)
         credential = flow.step2_exchange(credential)
-        result = credential.authorize(SendData.POST(final, params=post_data))
+        result = credential.authorize(request.POST(final, params=post_data))
         return result
 
 
@@ -92,7 +92,7 @@ class MailingList(models.Model):
         sending = SendData()
         sending.name=self.name
         sending.email = self.email
-        sending.send_data()
+        sending.send_data(HttpRequest)
         return super(MailingList, self).save(*args, **kwargs)
 
 
