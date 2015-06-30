@@ -38,7 +38,7 @@ class SendData(models.Model):
         user = request.user
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
-
+        
         flow = OAuth2WebServerFlow(client_id=client_id,
                            client_secret=client_secret,
                            scope=scope,
@@ -49,25 +49,6 @@ class SendData(models.Model):
             "email": email,
             "name": name
         }
-        #
-        # if credential is None or credential.invalid == True:
-        #     flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
-        #                                            request.user)
-        #     authorize_url = flow.step1_get_authorize_url()
-        #     http = HttpResponseRedirect(authorize_url)
-        #     credential = flow.step2_exchange(http)
-        #     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
-        #     storage.put(credential)
-        #     http2 = httplib2.Http()
-        #     http2 = credential.authorize(http2.request(final, "POST", body=post_data))
-        #     return http2
-        # else:
-        #     credential = flow.step2_exchange(credential)
-        #     storage = Storage(CredentialsModel, 'id', request.user, 'credential')
-        #     storage.put(credential)
-        #     http2 = httplib2.Http()
-        #     http2 = credential.authorize(http2.request(final, "POST", body=post_data))
-        #     return http2
         if credential is None or credential.invalid == True:
             flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
                                                            user)
