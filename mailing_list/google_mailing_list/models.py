@@ -6,8 +6,7 @@ from oauth2client.django_orm import CredentialsField
 from django.http import HttpRequest
 import os
 import logging
-import httplib2
-from apiclient.discovery import build
+from httplib2 import Http
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -19,6 +18,8 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.django_orm import Storage
 from django.conf import settings
 from django.contrib.auth.models import User
+from apiclient.discovery import build
+from oauth2client.client import SignedJwtAssertionCredentials
 
 class FlowModel(models.Model):
   id = models.ForeignKey(User, primary_key=True)
@@ -35,30 +36,42 @@ class SendData(models.Model):
     def send_data(self, request):
         name = self.name
         email = self.email
-        user = request.user
+        # user = request.user
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
-        
-        flow = OAuth2WebServerFlow(client_id=client_id,
-                           client_secret=client_secret,
+        client_secrets = os.path.join(os.path.dirname(__file__), '..', 'client_secrets.json')
+        client_email="578636167063-78ajvmmfntd9c7iokk0gatqbuspu7rd6@developer.gserviceaccount.com"
+
+        with open("client_privacy.p12") as f:
+            private_key = f.read()
+
+        credentials = SignedJwtAssertionCredentials(client_email, private_key,
+            'https://www.googleapis.com/auth/sqlservice.admin')
+
+        flow = flow_from_clientsecrets(client_secrets,
                            scope=scope,
                            redirect_uri='localhost')
-        storage = Storage(CredentialsModel, 'id', user, 'credential')
-        credential = storage.get()
+
+        http = Http()
+        credentials.authorize(http)
+        groups = build("directory", "v1", http=http)
+
+        # storage = Storage(CredentialsModel, 'id', user, 'credential')
+        # credential = storage.get()
         post_data = {
             "email": email,
             "name": name
         }
-        if credential is None or credential.invalid == True:
-            flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
-                                                           user)
-            authorize_url = flow.step1_get_authorize_url()
-            authorize_url = HttpResponseRedirect(authorize_url)
-            credential = flow.step2_exchange(authorize_url)
-            storage = Storage(CredentialsModel, 'id', user, 'credential')
-            storage.put(credential)
-        credential = flow.step2_exchange(credential)
-        result = credential.authorize(request.POST(final, params=post_data))
+        # if credential is None or credential.invalid == True:
+        #     flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
+        #                                                    user)
+        #     authorize_url = flow.step1_get_authorize_url()
+        #     authorize_url = HttpResponseRedirect(authorize_url)
+        #     credential = flow.step2_exchange(authorize_url)
+        #     storage = Storage(CredentialsModel, 'id', user, 'credential')
+        #     storage.put(credential)
+        # credential = flow.step2_exchange(credential)
+        # result = credential.authorize(Http())
         return result
 
 
