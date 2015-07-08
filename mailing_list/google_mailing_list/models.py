@@ -33,7 +33,7 @@ class SendData(models.Model):
     def send_data(self, request):
         name = self.name
         email = self.email
-        user = self.id
+        session = request.COOKIES
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
         
@@ -43,7 +43,7 @@ class SendData(models.Model):
                            scope=scope,
                            redirect_uri='localhost')
 
-        storage = Storage(CredentialsModel, 'id', user, 'credential')
+        storage = Storage(CredentialsModel, 'id', int(session[0]), 'credential')
         credential = storage.get()
         http = Http()
         credential.authorize(http)
@@ -54,17 +54,18 @@ class SendData(models.Model):
 
         if credential is None or credential.invalid == True:
             flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
-                                                           user)
+                                                           int(session))
             authorize_url = flow.step1_get_authorize_url()
             authorize_url = HttpResponseRedirect(authorize_url)
             credential = flow.step2_exchange(authorize_url)
-            storage = Storage(CredentialsModel, 'id', user, 'credential')
+            storage = Storage(CredentialsModel, 'id', int(session[0]), 'credential')
             storage.put(credential)
         credential = flow.step2_exchange(credential)
-        post_data=urllib.urlencode(post_data)
-        result = credential.authorize(urllib2.Request(final, post_data))
-        response = urllib2.urlopen(result)
-        the_page = response.read()
+        the_page = credential.authorize(request.POST(final, post_data))
+        # post_data=urllib.urlencode(post_data)
+        # result = credential.authorize(urllib2.Request(final, post_data))
+        # response = urllib2.urlopen(result)
+        # the_page = response.read()
         return the_page
 
 
@@ -79,7 +80,8 @@ class MailingList(models.Model):
         sending = SendData()
         sending.name=self.name
         sending.email = self.email
-        sending.send_data(HttpRequest)
+        response = HttpRequest()
+        sending.send_data(response)
         return super(MailingList, self).save(*args, **kwargs)
 
 
