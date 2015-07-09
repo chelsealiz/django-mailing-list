@@ -37,7 +37,6 @@ class SendData(models.Model):
         final = "https://www.googleapis.com/admin/directory/v1/groups"
         scope = "https://www.googleapis.com/auth/admin.directory.group"
         
-
         flow = OAuth2WebServerFlow(client_id,
                                    client_secret,
                            scope=scope,
