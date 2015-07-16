@@ -21,6 +21,7 @@ from oauth2client.django_orm import Storage
 from django.conf import settings
 from django.contrib.auth.models import User
 import random
+from django.shortcuts import redirect
 
 
 class CredentialsModel(models.Model):
@@ -71,7 +72,7 @@ class SendData(models.Model):
             flow.params['state'] = xsrfutil.generate_token(settings.SECRET_KEY,
                                                            session)
             authorize_url = flow.step1_get_authorize_url()
-            authorize_url = HttpResponseRedirect(authorize_url)
+            authorize_url = redirect(authorize_url)
             credential = flow.step2_exchange(authorize_url)
             storage = Storage(CredentialsModel, 'id', session, 'credential')
             storage.put(credential)
