@@ -63,10 +63,6 @@ class Staff(models.Model):
     def remove_from_group(self, email):
         mail = email
         scope = 'https://www.googleapis.com/auth/admin.directory.members'
-        post_data = {
-            'email': self.email,
-            'role': 'MEMBER'
-        }
         credentials = utils.auth(scope)
         http_auth = credentials.authorize(httplib2.Http())
         service = build('admin', 'directory_v1', http=http_auth)
