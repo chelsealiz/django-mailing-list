@@ -21,10 +21,24 @@ class MailingList(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        self.make_mailing_list()
+        if not self.pk:
+            pass
+            self._make_mailing_list()
+        else:
+            self.update()
         return super(MailingList, self).save(*args, **kwargs)
 
-    def make_mailing_list(self):
+    def delete(self, *args, **kwargs):
+        scope = '/admin/directory/v1/groups/{}'.format(self.email)
+        request = utils.make_request('DELETE', 'www.googleapis.com', scope)
+        return super(MailingList, self).delete(*args, **kwargs)
+
+    def update(self):
+        scope = '/admin/directory/v1/groups/{}'.format(self.email)
+        request = utils.make_request('PUT', 'www.googleapis.com', scope)
+        return request
+
+    def _make_mailing_list(self):
         scope = 'https://www.googleapis.com/auth/admin.directory.group'
         post_data = {
             'email': self.email,
@@ -34,7 +48,12 @@ class MailingList(models.Model):
         http_auth = credentials.authorize(httplib2.Http())
         service = build('admin', 'directory_v1', http=http_auth)
         create = service.groups().insert(body=post_data)
-        return create.execute()
+        return create.exexute()
+
+    class Meta:
+        ordering = ('name',)
+        verbose_name_plural = u'Edit COS Mailing lists'
+        verbose_name = u'Mailing Lists'
 
 
 class Staff(models.Model):

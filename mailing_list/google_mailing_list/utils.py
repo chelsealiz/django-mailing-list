@@ -5,9 +5,16 @@ from django.shortcuts import redirect
 from oauth2client import xsrfutil
 from oauth2client.file import Storage
 from oauth2client import client
+import httplib
 
 CLIENT_ID = ''
 CLIENT_SECRET = ''
+
+
+def make_request(http_method, domain, scope):
+    conn = httplib.HTTPConnection(domain)
+    conn.request(http_method, scope)
+    return conn.getresponse().read()
 
 
 def auth(scope_url):
