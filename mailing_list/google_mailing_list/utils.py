@@ -18,7 +18,7 @@ def make_request(http_method, domain, scope):
 
 
 def auth(scope_url):
-    from google_mailing_list.models import CredentialsModel
+    from models import CredentialsModel
     flow = client.OAuth2WebServerFlow(client_id=CLIENT_ID,
                                       client_secret=CLIENT_SECRET,
                                       scope=scope_url,
