@@ -52,7 +52,7 @@ class MailingList(models.Model):
 
     class Meta:
         ordering = ('name',)
-        verbose_name_plural = u'Edit COS Mailing lists'
+        verbose_name_plural = u'Edit Mailing lists'
         verbose_name = u'Mailing Lists'
 
 
